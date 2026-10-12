@@ -1,6 +1,20 @@
-# Zika Virus Epidemic: Microcephaly Investigation Backlog in Brazil
+# Zika Virus Epidemic: Early Warning Analysis for Brazil and Colombia
 
-Time series analysis of the CDC Zika Virus Epidemic dataset, focused on where the investigation of microcephaly cases was stuck across Brazilian states in 2016, and on whether the data supports a forecasting model.
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![pandas](https://img.shields.io/badge/pandas-150458?logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-013243?logo=numpy&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C)
+![Google Colab](https://img.shields.io/badge/Google%20Colab-F9AB00?logo=googlecolab&logoColor=white)
+![Kaggle](https://img.shields.io/badge/Kaggle-20BEFF?logo=kaggle&logoColor=white)
+![Data](https://img.shields.io/badge/Data-CDC%20Zika%20Epidemic-2E7D32)
+![Domain](https://img.shields.io/badge/Domain-Public%20Health-C62828)
+![Focus](https://img.shields.io/badge/Focus-Time%20Series-6A1B9A)
+![Status](https://img.shields.io/badge/Status-Completed-brightgreen)
+
+![](https://github.com/RafaelGallo/Zika-Virus-Epidemic/blob/main/img/fe5afcda-b4fa-47f6-b029-3c163c8be979.png?raw=true)
+
+Time series analysis of the CDC Zika Virus Epidemic dataset. The main analysis looks at where the investigation of microcephaly cases was stuck across Brazilian states in 2016 and whether the data supports a forecasting model. A second, exploratory part looks at how Zika case reports evolved across Colombian municipalities.
 
 ## Table of Contents
 
@@ -9,8 +23,9 @@ Time series analysis of the CDC Zika Virus Epidemic dataset, focused on where th
 - [Dataset](#dataset)
 - [Scope of the Analysis](#scope-of-the-analysis)
 - [Methodology](#methodology)
-- [Key Findings](#key-findings)
+- [Key Findings: Brazil](#key-findings-brazil)
 - [Forecasting Experiment](#forecasting-experiment)
+- [Exploratory View: Zika Cases in Colombia](#exploratory-view-zika-cases-in-colombia)
 - [Limitations](#limitations)
 - [How to Reproduce](#how-to-reproduce)
 - [Tech Stack](#tech-stack)
@@ -54,7 +69,7 @@ The full dataset has 107,238 rows and 9 columns, with one row per reported indic
 
 ## Scope of the Analysis
 
-The analysis uses the Brazilian subset: **4,132 rows**, all at state level, covering **27 states** and **21 weekly reports** from 2016-02-13 to 2016-07-02.
+**Brazil (main analysis).** The Brazilian subset has **4,132 rows**, all at state level, covering **27 states** and **21 weekly reports** from 2016-02-13 to 2016-07-02.
 
 Indicators available for Brazil:
 
@@ -67,12 +82,14 @@ Indicators available for Brazil:
 | `municipality_microcephaly*` | municipalities | Count of municipalities, not people |
 | `zika_reported` | cases | Reported Zika cases, only 7 report dates |
 
-Decisions that shape the analysis:
+Decisions that shape the Brazilian analysis:
 
 - The three classification indicators describe the same pool of notifications, so they are analyzed together as confirmed, discarded and pending.
 - Municipality indicators count places, not people, and are never summed with case counts.
 - `zika_reported` has too few dates for a time series and includes a row named `Brazil` that is the national total tagged as a state, so it is excluded from state-level sums to avoid double counting.
 - Pending cases are a stock, not a flow: they drop when cases are classified and rise with new notifications. Differences between reports are therefore read as net change, not as new cases.
+
+**Colombia (exploratory).** The municipality-level Zika indicators come from Colombia, with about 25 weekly reports from January to June 2016. Locations are named `Colombia-Department-Municipality`, and some use an `Unknown` bucket when the municipality is not identified. This part uses suspected cases (`zika_suspected`) and a confirmed-case indicator. It is descriptive and was not developed into a model.
 
 ## Methodology
 
@@ -85,10 +102,11 @@ Decisions that shape the analysis:
    - confirmation rate among resolved cases.
 5. **Sensitivity of the ranking:** 1,000 random weight combinations, counting how often each state lands in the top 3.
 6. **Forecasting experiment:** next-week change in confirmed cases, tested against naive baselines on the 4 most recent reports.
+7. **Exploratory Zika view for Colombia:** timeline with a 4-report moving average, municipality heatmap, new cases per report, cumulative share of the five largest municipalities, timing of peaks, and size versus recent growth (last 4 reports against the previous 4, only for municipalities with at least 10 cases in the earlier period).
 
 Each finding was checked for sample size, for share versus risk, and for alternative explanations before being written down.
 
-## Key Findings
+## Key Findings: Brazil
 
 **National picture**
 
@@ -104,7 +122,13 @@ Each finding was checked for sample size, for share versus risk, and for alterna
 - **Sao Paulo:** queue grew from 163 to 290. About 205 new notifications came in against 78 classified, and about 97% of the classified cases were discarded. This looks like a triage capacity problem rather than an outbreak response problem.
 - **Pernambuco, Paraiba and Ceara:** concentrate confirmed cases and are classifying well. The priority there is follow-up of already confirmed cases, not the queue.
 - **Sergipe and Tocantins:** their queues shrank through one-off reviews (Sergipe confirmed 77 cases across three reports in May and June, Tocantins discarded 48 in a single report on 2016-06-04), so they are not a reference for a sustainable pace.
-- **Minas Gerais:** small queue (64) with no case classified in two months. A point of attention, not a priority.
+- **Minas Gerais:** small queue (64) with no case classified in two months, even though the state reported on every date. A point of attention, not a priority.
+
+![Cases still under investigation by state](img/__results___58_0.png)
+
+![Change by classification between 2016-05-07 and 2016-07-02](img/__results___67_0.png)
+
+A shrinking queue does not say what was decided: Pernambuco reduced its queue mostly by discarding cases (92% of those classified), while Bahia and Rio de Janeiro kept a flat queue because about 100 new notifications entered in each state while they classified 90 and 112 cases.
 
 **Priority ranking robustness**
 
@@ -112,9 +136,11 @@ Across 1,000 random weight combinations, **Bahia** was in the top 3 in 95% of dr
 
 The ranking measures where investigation is most stalled and most likely to yield confirmations. It does not measure outbreak size (Pernambuco) or queue growth (Sao Paulo).
 
+![Priority score by criterion](img/__results___75_0.png)
+
 ## Forecasting Experiment
 
-Target: change in confirmed cases per state in the next report. Features: the last three weekly changes, plus pending cases and their change. Test set: the 4 most recent reports, with one report skipped between training and test to avoid leakage. Mean absolute error in cases per state per week:
+Target: change in confirmed microcephaly cases per Brazilian state in the next report. Features: the last three weekly changes, plus pending cases and their change. Test set: the 4 most recent reports, with one report skipped between training and test to avoid leakage. Mean absolute error in cases per state per week:
 
 | Model | MAE |
 |---|---|
@@ -124,16 +150,61 @@ Target: change in confirmed cases per state in the next report. Features: the la
 | Linear regression, 3 lags | 1.60 |
 | Linear regression, 3 lags + pending queue | 1.56 |
 
-**Conclusion:** neither regression beat the simplest baseline, with or without the pending queue as a feature. In the final weeks the confirmed counts barely move, and "stays the same" is the best guess. With 21 reports the data supports descriptive analysis, not forecasting. The pending queue showed the expected sign (more pending cases, slightly more confirmations the following week), but the effect was too small to improve predictions.
+**Conclusion:** neither regression beat the simplest baseline, with or without the pending queue as a feature. In the final weeks the confirmed counts barely move, and "stays the same" is the best guess. With 21 reports the Brazilian state series supports descriptive analysis, not forecasting. The pending queue showed the expected sign (more pending cases, slightly more confirmations the following week), but the effect was too small to improve predictions.
+
+## Exploratory View: Zika Cases in Colombia
+
+This part asks a different question from the Brazilian analysis: when and where did Zika case reports grow, and does the timing of peaks give any lead time? It is descriptive, and the reporting pattern (see the cautions below) limits what can be concluded.
+
+**What the charts show**
+
+1. **Suspected cases rose, then roughly halved.** Summed over municipalities, `zika_suspected` rose from about 1,900 in January to a peak of about 7,200 on 2016-03-19, fell to about 3,400 by early June and stayed there.
+
+![Suspected Zika cases by report date](img/__results___29_0.png)
+
+2. **Reports come from a changing set of municipalities.** Among the 15 municipalities with the highest suspected values, 14 stop appearing before the last report, some after only two reports (Soledad, Los Patios). Only `Tolima-Unknown` has data through the end. Yumbo has the largest values (above 500 in mid-March) and then disappears. The fall of the total after March therefore mixes a real decline with municipalities leaving the reports, and the data does not separate the two.
+
+![Suspected Zika cases, top 15 municipalities over time](img/__results___30_0.png)
+
+3. **Confirmed cases accelerate late in the series.** New cases per report stay mostly below 500 until April, reach about 1,000 to 1,600 in May and early June, and hit about 1,950 and 2,020 in the last two reports. The last one, on 2016-06-25, is the highest of the series, and the 4-report average was still rising at the end.
+
+![New cases per report with moving average](img/__results___32_0.png)
+
+4. **Reporting is lumpy.** Several report dates add zero cases and are followed by large jumps, so part of the late surge may be catch-up of delayed reports. The last two reports alone add about 4,000 of the roughly 11,600 cumulative cases, about a third.
+
+5. **Cases are spread across many municipalities.** The five largest (Cucuta, Ibague, Cali, `Tolima-Unknown` and Neiva) account for about 3,300 of the 11,600 cumulative cases, under 30%. Cucuta rose early and flattened by June, while Cali and Ibague climbed in June.
+
+![Cumulative new cases, top 5 municipalities versus others](img/__results___33_0.png)
+
+6. **Peaks are staggered in time.** Among the 15 largest municipalities, peak dates span 119 days, from 2016-02-27 (Cucuta) to 2016-06-25 (Cali, Ibague and Yopal). Six of the 15 peak in the last two reports, so for them the "peak" is just the last observation and the outbreak was probably still growing when the data ends.
+
+![Peak dates of the 15 largest municipalities](img/__results___40_0.png)
+
+7. **Fastest growth clusters by department.** In the size versus recent growth view, the ten highlighted municipalities include four in Valle del Cauca (Cali, Palmira, Tulua and an `Unknown` bucket), two in Tolima (Ibague, Espinal), two in Casanare (Yopal, Aguazul) and two in Arauca (Tame and one more). Cali is the largest of them (about 670 cases, growth above 200%), followed by Ibague (about 830 cases, growth above 60%). Many municipalities sit at about -100%, meaning no cases in the last four reports. Given the reporting pattern above, that fits municipalities that stopped reporting more than epidemics that ended.
+
+![Risk ranking: size versus recent growth](img/__results___41_0.png)
+
+**Implication for the business problem**
+
+Two signals would be useful for an early-warning use case, provided they hold up with cleaner reporting data. First, peaks arrive in different places up to four months apart, which leaves time to position resources in places that peak late. Second, at the end of the data the fastest growth is concentrated in Valle del Cauca, Tolima, Casanare and Arauca, with Cali and Ibague as the largest, so those are the first places to check against newer reports. Both depend on the late surge not being a reporting catch-up.
+
+**Reading these results with care**
+
+- The data does not say whether a municipality that disappears had zero cases or stopped reporting. The heatmap fills gaps with zero.
+- A peak on the last report date is censored: it shows where the data ends, not where the outbreak peaked.
+- Growth percentages come from short windows (4 reports against 4) and municipalities with small bases are noisy.
+- The staggered peaks and the department clusters describe association in reported data, not spread or causes.
 
 ## Limitations
 
-- 21 weekly reports are too few for a reliable forecast, and the test window is only 4 reports.
+- 21 weekly reports for Brazil are too few for a reliable forecast, and the test window is only 4 reports.
 - The data does not separate new notifications from reclassifications, so "new notifications" is an estimate (sum of the three classification changes).
 - Batch reclassifications by some states distort the pace measured over a two-month window.
 - The priority score depends on equal weights, which is an assumption and not an agency rule.
-- Findings describe the situation in July 2016 and show association, not causation.
-- The Zika case series (7 dates) is too short for time series work.
+- Brazilian Zika cases (7 dates) are too few for time series work.
+- Colombian reports are intermittent: municipalities enter and leave the reports, some dates add no cases, and `Unknown` buckets hide the municipality. This weakens any reading of totals over time.
+- It is not clear from the data whether `zika_suspected` is a weekly count or a snapshot, which affects how the decline after March should be read.
+- Findings describe the situation in 2016 and show association, not causation.
 
 ## How to Reproduce
 
@@ -152,7 +223,7 @@ pip install -q --upgrade kaggle
 kaggle datasets download -d cdc/zika-virus-epidemic -p /content/data --unzip
 ```
 
-Then run the notebook cells in order. The Brazilian subset is obtained by filtering `location` for "brazil".
+Then run the notebook cells in order. The Brazilian subset is obtained by filtering `location` for "brazil", and the Colombian one for "colombia". The charts in this README are stored in the `img` folder.
 
 ## Tech Stack
 
@@ -162,8 +233,9 @@ Python, pandas, NumPy, Matplotlib, scikit-learn, Kaggle API, Google Colab.
 
 - Rolling backtest with several test windows to check whether the regression only fails because the final weeks changed regime.
 - Normalize the pending queue by state size before testing it as a predictor.
-- Add the Zika case counts to the state view, separating the national total from the states.
-- Repeat the exercise on a dataset with a longer series, which is what the forecasting objective needs.
+- Test a forecasting model on the Colombian municipal series (about 25 weekly reports and many municipalities), after handling intermittent reporting, and compare it with the same naive baselines used for Brazil.
+- Check whether the late surge in Colombia is a reporting catch-up, for example by comparing the number of municipalities reporting on each date.
+- Add the Zika case counts to the Brazilian state view, separating the national total from the states.
 - Build a dashboard version of the priority ranking.
 
 ## Author
